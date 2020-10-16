@@ -7,9 +7,9 @@ using UnityEngine.SocialPlatforms;
 public class Bezier
 {
 
-    private Transform[] controlPoints;
-    private int[] curveLengths;
-    private float[] percentCurve;
+    private Transform[] controlPoints = null;
+    private int[] curveLengths = null;
+    private float[] percentCurve = null;
 
     public Bezier(Transform[] controlPoints, int[] curveLengths)
     {

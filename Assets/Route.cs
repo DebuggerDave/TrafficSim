@@ -2,22 +2,33 @@
 
 public class Route : MonoBehaviour
 {
+   
     [SerializeField]
-    private Transform[] controlPoints;
+    private int[] curveLengths = null;
 
-    public int[] curveLengths;
-
+    [SerializeField]
     [Min(1)]
-    public int numPositions;
+    private int numPositions = 0;
+
+    private Transform[] controlPoints = null;
+
+    public Bezier bezier = null;
 
     void Start()
     {
+        int numControlPoints = transform.childCount;
+        controlPoints = new Transform[numControlPoints];
+        for (int i = 0; i < controlPoints.Length; i++)
+        {
+            controlPoints[i] = transform.GetChild(i);
+        }
 
+        bezier = new Bezier(controlPoints, curveLengths);
     }
 
     void OnDrawGizmos()
     {
-        Bezier bezier = new Bezier(controlPoints, curveLengths);
+        Start();
         for (float t = 0; t <= 1; t += (1f / numPositions))
         {
             Gizmos.DrawSphere(bezier.GenPoint(t), 0.25f);
