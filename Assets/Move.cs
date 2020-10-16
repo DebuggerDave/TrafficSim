@@ -13,21 +13,42 @@ public class Move : MonoBehaviour
     private float curvePosition = 0;
 
     [SerializeField]
-    private GameObject route = null;
+    private GameObject[] routes = null;
 
-    private Bezier bezier = null;
+    [SerializeField]
+    private int lane = 0;
+
+    private Bezier[] beziers = null;
 
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
-        bezier = route.GetComponent<Route>().bezier;
+        beziers = new Bezier[routes.Length];
+        lane = Mathf.Clamp(lane, 0, routes.Length);
+
+        for (int i = 0; i < routes.Length; i++)
+        {
+            beziers[i] = routes[i].GetComponent<Route>().bezier;
+        }
+
+        transform.position = beziers[lane].GenPoint(curvePosition);
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
         float updatedPosition = curvePosition + (Time.deltaTime * speed);
         curvePosition = updatedPosition - Mathf.Floor(updatedPosition);
-        transform.position = bezier.GenPoint(curvePosition);
+        transform.position = beziers[lane].GenPoint(curvePosition);
+    }
+
+    public void Right()
+    {
+        lane = Mathf.Clamp(lane + 1, 0, beziers.Length - 1);
+    }
+
+    public void Left()
+    {
+        lane = Mathf.Clamp(lane - 1, 0, beziers.Length - 1);
     }
 }
