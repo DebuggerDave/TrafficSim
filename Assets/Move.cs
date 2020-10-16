@@ -4,56 +4,42 @@ using UnityEngine;
 
 public class Move : MonoBehaviour
 {
-    [Min(1)]
-    public float speed;
-
     [SerializeField]
     [Min(0)]
-    private int curveIndex;
+    private float speed;
 
     [SerializeField]
-    private GameObject[] routes;
+    [Range(0, 1)]
+    private float curvePosition;
 
-    private Vector3[] curve;
+    [SerializeField]
+    private GameObject route;
 
-    private float leftoverTime = 0;
+    private Bezier bezier;
+
+    private Transform[] controlPoints;
+
+    private int[] curveLengths;
 
 
     // Start is called before the first frame update
     void Start()
     {
-        int totalPoints = 0;
-        Vector3[][] curves = new Vector3[routes.Length][];
-
-        for (int i = 0; i < routes.Length; i++)
+        int numControlPoints = route.transform.childCount;
+        controlPoints = new Transform[numControlPoints];
+        curveLengths = route.GetComponent<Route>().curveLengths;
+        for (int i = 0; i < controlPoints.Length; i++)
         {
-            curves[i] = routes[i].GetComponent<Route>().points;
-            totalPoints += curves[i].Length;
+            controlPoints[i] = route.GetComponent<Route>().transform.GetChild(i);
         }
-
-        curve = new Vector3[totalPoints];
-
-        int counter = 0;
-        for (int i = 0; i < routes.Length; i++)
-        {
-            for (int j = 0; j < curves[i].Length; j++)
-            {
-                curve[counter] = curves[i][j];
-                counter++;
-            }
-        }
-
-        curveIndex = curveIndex % curve.Length;
-        transform.position = curve[curveIndex];
+        bezier = new Bezier(controlPoints, curveLengths);
     }
 
     // Update is called once per frame
     void Update()
     {
-        float advancement = (Time.deltaTime + leftoverTime) * speed;
-        leftoverTime = (advancement - Mathf.Floor(advancement)) / speed;
-
-        curveIndex = (curveIndex + (int)Mathf.Floor(advancement)) % curve.Length;
-        transform.position = curve[curveIndex];
+        float updatedPosition = curvePosition + (Time.deltaTime * speed / 10000);
+        curvePosition = updatedPosition - Mathf.Floor(updatedPosition);
+        transform.position = bezier.GenPoint(curvePosition);
     }
 }
