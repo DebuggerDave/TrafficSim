@@ -37,9 +37,17 @@ public class Move : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
+        Vector3 currentPosition = transform.position;
+        Vector3 currentDirection = transform.Find("Front").position - currentPosition;
+
         float updatedPosition = curvePosition + (Time.deltaTime * speed);
         curvePosition = updatedPosition - Mathf.Floor(updatedPosition);
-        transform.position = beziers[lane].GenPoint(curvePosition);
+        Vector3 newPosition = beziers[lane].GenPoint(curvePosition);
+        transform.position = newPosition;
+
+        Vector3 newDirection = newPosition - currentPosition;
+        float movementAngle = Vector3.SignedAngle(currentDirection, newDirection, Vector3.up);
+        transform.Rotate(new Vector3(0, movementAngle, 0), Space.World);
     }
 
     public void Right()
