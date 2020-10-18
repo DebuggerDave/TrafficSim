@@ -46,7 +46,7 @@ public class Bezier
         {
             totalPercent += percentCurve[i];
 
-            if (tGlobal < totalPercent)
+            if (tGlobal <= totalPercent)
             {
                 curveNum = i;
                 tLocal = (tGlobal - (totalPercent - percentCurve[i])) / percentCurve[i];
@@ -64,6 +64,48 @@ public class Bezier
         }
 
         return point;
+    }
+
+    public Vector3[] GenAllPoints(int numPoints)
+    {
+        Vector3[] curvePoints = new Vector3[numPoints];
+        float step = 1f / (numPoints - 1);
+
+        int counter = 0;
+        for (float t = 0; t <= 1; t += step)
+        {
+            curvePoints[counter] = GenPoint(t);
+            counter++;
+        }
+
+        return curvePoints;
+    }
+
+    public float ArcLengthApproximation(float tStart, float tStop, int numPoints)
+    {
+        tStop = Mathf.Clamp(tStop, 0, 1);
+        float length = 0;
+        Vector3 lastPoint;
+        Vector3 currentPoint = GenPoint(tStart);
+        float step = 1f / (numPoints - 1);
+
+        if ((tStop < tStart) && (step < tStop))
+        {
+            int numPointsRecursive = (int)Mathf.Floor(tStop / step);
+            length += ArcLengthApproximation(0, tStop, numPointsRecursive);
+            tStop = 1;
+        }
+
+        for (float t = (tStart + step); t <= tStop; t += step)
+        {
+            lastPoint = currentPoint;
+            currentPoint = GenPoint(t);
+            lastPoint = currentPoint;
+            length += Vector3.Distance(lastPoint, currentPoint);
+        }
+        length += Vector3.Distance(currentPoint, GenPoint(tStop));
+
+        return length;
     }
 
     private int BinomCoef(int total, int choose)

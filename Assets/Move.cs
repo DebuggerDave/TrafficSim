@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class Move : MonoBehaviour
@@ -9,40 +8,74 @@ public class Move : MonoBehaviour
     private float speed = 1;
 
     [SerializeField]
-    [Range(0, 1)]
-    private float curvePosition = 0;
-
-    [SerializeField]
-    private GameObject[] routes = null;
+    private GameObject[] routeObjects = null;
 
     [SerializeField]
     private int lane = 0;
 
-    private Bezier[] beziers = null;
+    private Route[] routes = null;
+
+    public float nextObjectDistance = float.PositiveInfinity;
+
+    [Range(0, 1)]
+    public float curvePosition = 0;
+
+    [Min(1)]
+    public int numApproximationPoints = 20;
 
     // Start is called before the first frame update
     private void Start()
     {
-        beziers = new Bezier[routes.Length];
+        routes = new Route[routeObjects.Length];
         lane = Mathf.Clamp(lane, 0, routes.Length);
 
-        for (int i = 0; i < routes.Length; i++)
+        for (int i = 0; i < routeObjects.Length; i++)
         {
-            beziers[i] = routes[i].GetComponent<Route>().bezier;
+            routes[i] = routeObjects[i].GetComponent<Route>();
         }
 
-        transform.position = beziers[lane].GenPoint(curvePosition);
+        transform.position = routes[lane].bezier.GenPoint(curvePosition);
     }
 
     // Update is called once per frame
     private void Update()
+    {
+        if (routes != null)
+        {
+            updateTransform();
+        }
+
+        SortedList<float, GameObject> routeCollisions = routes[lane].collidedObjects;
+        if ((routeCollisions.ContainsValue(gameObject)) & (routeCollisions.Count > 1))
+        {
+            int nextObjectIndex = (routeCollisions.IndexOfValue(gameObject) + 1) % routeCollisions.Count;
+            float nextObjectPosition = routeCollisions.Values[nextObjectIndex].GetComponent<Move>().curvePosition;
+            nextObjectDistance = routes[lane].bezier.ArcLengthApproximation(curvePosition, nextObjectPosition, numApproximationPoints);
+        }
+        else
+        {
+            nextObjectDistance = float.PositiveInfinity;
+        }
+    }
+
+    public void Right()
+    {
+        lane = Mathf.Clamp(lane + 1, 0, routes.Length - 1);
+    }
+
+    public void Left()
+    {
+        lane = Mathf.Clamp(lane - 1, 0, routes.Length - 1);
+    }
+
+    private void updateTransform()
     {
         Vector3 currentPosition = transform.position;
         Vector3 currentDirection = transform.Find("Front").position - currentPosition;
 
         float updatedPosition = curvePosition + (Time.deltaTime * speed);
         curvePosition = updatedPosition - Mathf.Floor(updatedPosition);
-        Vector3 newPosition = beziers[lane].GenPoint(curvePosition);
+        Vector3 newPosition = routes[lane].bezier.GenPoint(curvePosition);
         transform.position = newPosition;
 
         Vector3 newDirection = newPosition - currentPosition;
@@ -50,13 +83,19 @@ public class Move : MonoBehaviour
         transform.Rotate(new Vector3(0, movementAngle, 0), Space.World);
     }
 
-    public void Right()
+    private void OnTriggerEnter(Collider collider)
     {
-        lane = Mathf.Clamp(lane + 1, 0, beziers.Length - 1);
+        //Debug.Log("HEY");
     }
 
-    public void Left()
+    private void OnTriggerStay(Collider collider)
     {
-        lane = Mathf.Clamp(lane - 1, 0, beziers.Length - 1);
+        //Debug.Log("HEY");
     }
+
+    private void OnTriggerExit(Collider collider)
+    {
+        //Debug.Log("HEY");
+    }
+
 }
