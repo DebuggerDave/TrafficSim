@@ -1,72 +1,81 @@
-﻿using System.Collections;
+﻿using JetBrains.Annotations;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SocialPlatforms;
 
+// Represents curveLenths.Length Bezier curves connected together
+// Uses numCurveControlPoints[i] control points from controlPoints to generate curve i
 public class Bezier
 {
 
     private Transform[] controlPoints = null;
-    private int[] curveLengths = null;
-    private float[] percentCurve = null;
-    private float epsilon = .0001f;
+    private int[] numCurveControlPoints = null;
 
-    public Bezier(Transform[] controlPoints, int[] curveLengths)
+    // for floating point approximation
+    private static float epsilon = .0001f;
+
+    public Bezier(Transform[] controlPoints, int[] numCurveControlPoints)
     {
         this.controlPoints = controlPoints;
-        this.curveLengths = curveLengths;
-        this.percentCurve = new float[curveLengths.Length];
+        this.numCurveControlPoints = numCurveControlPoints;
 
-        int total = curveLengths.Sum();
-        if (total != controlPoints.Length)
+        if (controlPoints.Length < 2)
         {
-            throw new System.Exception("Sum of curveLengths must equal total controlPoints");
+            throw new System.ArgumentException("ControlPoints must contain at least 2 points");
         }
-
-        for (int i = 0; i < curveLengths.Length; i++)
+        if (numCurveControlPoints.Sum() != controlPoints.Length)
         {
-            percentCurve[i] = curveLengths[i] / (float)total;
+            throw new System.ArgumentException("Sum of numCurveControlPoints must equal total controlPoint");
         }
     }
 
     public Vector3 GenPoint(float t)
     {
-        if (curveLengths.Length == 0)
-        {
-            return new Vector3();
-        }
-
         float tGlobal = Mathf.Abs(t - Mathf.Floor(t));
-        float tLocal = 0;
         int curveNum = 0;
-        float totalPercent = 0;
-        int controlPointStart = 0;
+        float aggPercent = 0;
+        float percentWholeCurve = 0;
 
-        for (int i = 0; i < curveLengths.Length; i++)
+        // Find curve associated with global t value
+        for (int i = 0; i < numCurveControlPoints.Length; i++)
         {
-            totalPercent += percentCurve[i];
-
-            if (tGlobal <= totalPercent)
+            percentWholeCurve = numCurveControlPoints[i] / (float)controlPoints.Length;
+            aggPercent += percentWholeCurve;
+            if (tGlobal <= aggPercent)
             {
+                aggPercent -= percentWholeCurve;
                 curveNum = i;
-                tLocal = (tGlobal - (totalPercent - percentCurve[i])) / percentCurve[i];
                 break;
             }
+        }
 
-            controlPointStart += curveLengths[i];
+        float  tLocal = (tGlobal - aggPercent) / percentWholeCurve;
+        return BezierFormula(curveNum, tLocal);
+    }
+
+    // https://en.wikipedia.org/wiki/B%C3%A9zier_curve#Explicit_definition
+    private Vector3 BezierFormula(int curveNum, float t)
+    {
+        int controlPointStart = 0;
+        for (int i = 0; i < curveNum; i++)
+        {
+            controlPointStart += numCurveControlPoints[i];
         }
 
         Vector3 point = new Vector3();
-        for (int i = controlPointStart; i < (controlPointStart + curveLengths[curveNum]); i++)
+        int index = controlPointStart;
+        for (int i = 0; i < numCurveControlPoints[curveNum]; i++)
         {
-            int iLocal = i - controlPointStart;
-            point += BinomCoef(curveLengths[curveNum] - 1, iLocal) * Mathf.Pow(1 - tLocal, curveLengths[curveNum] - 1 - iLocal) * Mathf.Pow(tLocal, iLocal) * controlPoints[i].position;
+            point += BinomCoef(numCurveControlPoints[curveNum] - 1, i) * Mathf.Pow(1 - t, numCurveControlPoints[curveNum] - 1 - i) * Mathf.Pow(t, i) * controlPoints[index].position;
+            index++;
         }
 
         return point;
     }
 
+    // Generate numPoints to create a bezier curve
     public Vector3[] GenAllPoints(int numPoints)
     {
         Vector3[] curvePoints = new Vector3[numPoints];
@@ -82,39 +91,54 @@ public class Bezier
         return curvePoints;
     }
 
+    // Get Bezier curve arc length between two t values
+    // Uses numPoints to approximate curve
     public float ArcLengthApproximation(float tStart, float tStop, int numPoints)
     {
-        tStart = Mathf.Clamp(tStart, 0, 1);
-        tStop = Mathf.Clamp(tStop, 0, 1);
-        if (tStart == tStop)
-        {
-            return 0;
-        }
-        else if (tStop < tStart)
-        {
-            tStop++;
-        }
         float length = 0;
-
         Vector3 lastPoint;
         Vector3 currentPoint = GenPoint(tStart);
+
         float step = (tStop - tStart) / (Mathf.Max(numPoints - 1, 1));
-        for (float t = (tStart + step); t <= tStop; t += step)
+
+        if (step < 0)
         {
-            lastPoint = currentPoint;
-            currentPoint = GenPoint(t);
-            length += Vector3.Distance(lastPoint, currentPoint);
+            for (float t = (tStart + step); t >= tStop; t += step)
+            {
+                lastPoint = currentPoint;
+                currentPoint = GenPoint(t);
+                length -= Vector3.Distance(lastPoint, currentPoint);
+            }
+        }
+        else if (step > 0)
+        {
+            for (float t = (tStart + step); t <= tStop; t += step)
+            {
+                lastPoint = currentPoint;
+                currentPoint = GenPoint(t);
+                length += Vector3.Distance(lastPoint, currentPoint);
+            }
+        }
+        else
+        {
+            return 0;
         }
 
         return length;
     }
 
+    // WARNING low epsilon values can cause infinite loops
+    // Get t value distance meters from tStart
+    // uses numPoints to approximate bezier curve
     public float GenDistanceT(float tStart, float distance, int numPoints)
     {
+        // binary like search when overstepping distance
+        bool overStep = false;
+
         float aggDistance = 0;
         float t = tStart;
         float step = 1f / (Mathf.Max(numPoints, 1));
-        bool overStep = false;
+
         Vector3 lastPoint;
         Vector3 currentPoint = GenPoint(t);
 
@@ -127,8 +151,9 @@ public class Bezier
                     step /= 2;
                     overStep = false;
                 }
-                t += step;
+
                 lastPoint = currentPoint;
+                t += step;
                 currentPoint = GenPoint(t);
                 aggDistance += Vector3.Distance(lastPoint, currentPoint);
             }
@@ -139,6 +164,7 @@ public class Bezier
                     step /= 2;
                     overStep = true;
                 }
+
                 t -= step;
                 lastPoint = GenPoint(t);
                 aggDistance -= Vector3.Distance(lastPoint, currentPoint);
@@ -146,9 +172,12 @@ public class Bezier
             }
         }
 
-        return t - Mathf.Floor(t);
+        // return decimal only
+        return (t - Mathf.Floor(t));
     }
 
+    // Floating point equality approximation
+    // True if floating points are within epsilon of each other
     bool isApproxEqual(float a, float b, float epsilon)
     {
         if (a >= b - epsilon && a <= b + epsilon)
@@ -161,11 +190,14 @@ public class Bezier
         }
     }
 
+    // Binomial Coefficient
     private int BinomCoef(int total, int choose)
     {
         return Fact(total) / (Fact(choose) * Fact(total - choose));
     }
 
+    // Factorial
+    // Could be implemented with array storage for speedup?
     private int Fact(int n)
     {
         int result = 1;

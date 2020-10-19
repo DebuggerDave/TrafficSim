@@ -42,14 +42,22 @@ public class Move : MonoBehaviour
     {
         if (routes != null)
         {
-            updateTransform();
+            UpdateTransform();
+            GetNextObjectDistance();
         }
+    }
 
+    private void GetNextObjectDistance()
+    {
         SortedList<float, GameObject> routeCollisions = routes[lane].collidedObjects;
         if ((routeCollisions.ContainsValue(gameObject)) & (routeCollisions.Count > 1))
         {
             int nextObjectIndex = (routeCollisions.IndexOfValue(gameObject) + 1) % routeCollisions.Count;
             float nextObjectPosition = routeCollisions.Values[nextObjectIndex].GetComponent<Move>().curvePosition;
+            if (nextObjectPosition < curvePosition)
+            {
+                nextObjectPosition++;
+            }
             nextObjectDistance = routes[lane].bezier.ArcLengthApproximation(curvePosition, nextObjectPosition, numApproximationPoints);
         }
         else
@@ -68,7 +76,7 @@ public class Move : MonoBehaviour
         lane = Mathf.Clamp(lane - 1, 0, routes.Length - 1);
     }
 
-    private void updateTransform()
+    private void UpdateTransform()
     {
         Vector3 currentPosition = transform.position;
         Vector3 currentDirection = transform.Find("Front").position - currentPosition;
@@ -85,7 +93,10 @@ public class Move : MonoBehaviour
 
     private void OnTriggerEnter(Collider collider)
     {
-        //Debug.Log("HEY");
+        if (collider.tag == "vehicle")
+        {
+            Debug.Log(gameObject.name +  " AND " + collider.gameObject.name + " COLLIDED");
+        }
     }
 
     private void OnTriggerStay(Collider collider)
