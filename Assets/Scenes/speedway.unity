@@ -1738,7 +1738,7 @@ MonoBehaviour:
   lane: 0
   nextObjectDistance: Infinity
   curvePosition: 0
-  numApproximationPoints: 20
+  approxStepSize: 0.0001
 --- !u!65 &1361906463
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1858,8 +1858,8 @@ MonoBehaviour:
   - {fileID: 111590680}
   lane: 0
   nextObjectDistance: Infinity
-  curvePosition: 0.214
-  numApproximationPoints: 20
+  curvePosition: 0.5
+  approxStepSize: 0.0001
 --- !u!65 &1481072689
 BoxCollider:
   m_ObjectHideFlags: 0

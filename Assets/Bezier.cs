@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Build.Reporting;
 using UnityEngine;
 using UnityEngine.SocialPlatforms;
 
@@ -82,34 +81,30 @@ public class Bezier
         return curvePoints;
     }
 
-    public float ArcLengthApproximation(float tStart, float tStop, float step)
+    public float ArcLengthApproximation(float tStart, float tStop, int numPoints)
     {
-        if (step <= 0)
-        {
-            throw new System.Exception("Step must be positive");
-        }
-        step = Mathf.Max(step, 1);
-
+        tStart = Mathf.Clamp(tStart, 0, 1);
         tStop = Mathf.Clamp(tStop, 0, 1);
-
         float length = 0;
-        Vector3 lastPoint;
-        Vector3 currentPoint = GenPoint(tStart);
 
         if (tStop < tStart)
         {
-            length += ArcLengthApproximation(0, tStop, step);
+            float total = tStop + (1 - tStart);
+            float recursivePercent = tStop / total;
+            length += ArcLengthApproximation(0, tStop, (int)(recursivePercent * numPoints));
+            numPoints *= (int)(1 - recursivePercent);
             tStop = 1;
         }
 
+        Vector3 lastPoint;
+        Vector3 currentPoint = GenPoint(tStart);
+        float step = (tStop - tStart) / (Mathf.Max(numPoints - 1, 1));
         for (float t = (tStart + step); t <= tStop; t += step)
         {
             lastPoint = currentPoint;
             currentPoint = GenPoint(t);
-            lastPoint = currentPoint;
             length += Vector3.Distance(lastPoint, currentPoint);
         }
-        length += Vector3.Distance(currentPoint, GenPoint(tStop));
 
         return length;
     }
