@@ -53,12 +53,6 @@ public class Vehicle : MonoBehaviour
         else
         {
             UpdateTransform();
-
-            if (name == "Car2")
-            {
-                IsRightLaneOpen();
-                IsLeftLaneOpen();
-            }
         }
     }
 
