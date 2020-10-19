@@ -16,11 +16,12 @@ public class Vehicle : MonoBehaviour
     private int lane = 0;
 
     [SerializeField]
-    private float nextVehicleDist = float.PositiveInfinity;
+    [Min(1)]
+    private int numApproxPoints = 100;
 
     [SerializeField]
     [Min(1)]
-    private int numApproxPoints = 100;
+    private float laneWidth = 3;
 
     [Range(0, 1)]
     public float bezierParam = 0;
@@ -52,7 +53,12 @@ public class Vehicle : MonoBehaviour
         else
         {
             UpdateTransform();
-            UpdateNextVehicleDist();
+
+            if (name == "Car2")
+            {
+                IsRightLaneOpen();
+                IsLeftLaneOpen();
+            }
         }
     }
 
@@ -76,7 +82,7 @@ public class Vehicle : MonoBehaviour
         return GetCurrentRoute().bezier;
     }
 
-    private void UpdateNextVehicleDist()
+    private float GetNextVehicleDist()
     {
         float step = 1f / (numApproxPoints - 1);
         Vector3 currentPosition = transform.position;
@@ -107,15 +113,13 @@ public class Vehicle : MonoBehaviour
                             nextBezierParam++;
                         }
 
-                        nextVehicleDist = GetCurrentBezier().ArcLengthApproximation(bezierParam, nextBezierParam, numApproxPoints);
-
-                        return;
+                        return GetCurrentBezier().ArcLengthApproximation(bezierParam, nextBezierParam, numApproxPoints);
                     }
                 }
             }
         }
 
-        nextVehicleDist = float.PositiveInfinity;
+        return float.PositiveInfinity;
     }
 
     public void MoveRight()
@@ -123,9 +127,63 @@ public class Vehicle : MonoBehaviour
         lane = Mathf.Clamp(lane + 1, 0, routes.Length - 1);
     }
 
+    public bool IsRightLaneOpen()
+    {
+        Transform frontTransform = transform.Find("Front");
+        Transform backTransform = transform.Find("Back");
+        if ((frontTransform == null) || (backTransform == null))
+        {
+            Debug.LogError("Cannot lane check, Vehicle must have \"Front\" and \"Back\" children");
+            return false;
+        }
+        else
+        {
+            Vector3 direction = Vector3.Cross(-(frontTransform.position - transform.position), Vector3.up);
+            if (
+                Physics.Raycast(frontTransform.position, direction, laneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide) ||
+                Physics.Raycast(backTransform.position, direction, laneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide) ||
+                Physics.Raycast(transform.position, direction, laneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide)
+                )
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+    }
+
     public void MoveLeft()
     {
         lane = Mathf.Clamp(lane - 1, 0, routes.Length - 1);
+    }
+
+    public bool IsLeftLaneOpen()
+    {
+        Transform frontTransform = transform.Find("Front");
+        Transform backTransform = transform.Find("Back");
+        if ((frontTransform == null) || (backTransform == null))
+        {
+            Debug.LogError("Cannot lane check, Vehicle must have \"Front\" and \"Back\" children");
+            return false;
+        }
+        else
+        {
+            Vector3 direction = Vector3.Cross(frontTransform.position - transform.position, Vector3.up);
+            if (
+                Physics.Raycast(frontTransform.position, direction, laneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide) ||
+                Physics.Raycast(backTransform.position, direction, laneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide) ||
+                Physics.Raycast(transform.position, direction, laneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide)
+                )
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
     }
 
     private void UpdateTransform()
