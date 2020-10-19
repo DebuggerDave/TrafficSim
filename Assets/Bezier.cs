@@ -10,16 +10,16 @@ using UnityEngine.SocialPlatforms;
 public class Bezier
 {
 
-    private Transform[] controlPoints = null;
-    private int[] numCurveControlPoints = null;
+    private Vector3[] controlPoints = null;
+    private int[] curveSizes = null;
 
     // for floating point approximation
     private static float epsilon = .0001f;
 
-    public Bezier(Transform[] controlPoints, int[] numCurveControlPoints)
+    public Bezier(Vector3[] controlPoints, int[] numCurveControlPoints)
     {
         this.controlPoints = controlPoints;
-        this.numCurveControlPoints = numCurveControlPoints;
+        this.curveSizes = numCurveControlPoints;
 
         if (controlPoints.Length < 2)
         {
@@ -39,9 +39,9 @@ public class Bezier
         float percentWholeCurve = 0;
 
         // Find curve associated with global t value
-        for (int i = 0; i < numCurveControlPoints.Length; i++)
+        for (int i = 0; i < curveSizes.Length; i++)
         {
-            percentWholeCurve = numCurveControlPoints[i] / (float)controlPoints.Length;
+            percentWholeCurve = curveSizes[i] / (float)controlPoints.Length;
             aggPercent += percentWholeCurve;
             if (tGlobal <= aggPercent)
             {
@@ -61,14 +61,14 @@ public class Bezier
         int controlPointStart = 0;
         for (int i = 0; i < curveNum; i++)
         {
-            controlPointStart += numCurveControlPoints[i];
+            controlPointStart += curveSizes[i];
         }
 
         Vector3 point = new Vector3();
         int index = controlPointStart;
-        for (int i = 0; i < numCurveControlPoints[curveNum]; i++)
+        for (int i = 0; i < curveSizes[curveNum]; i++)
         {
-            point += BinomCoef(numCurveControlPoints[curveNum] - 1, i) * Mathf.Pow(1 - t, numCurveControlPoints[curveNum] - 1 - i) * Mathf.Pow(t, i) * controlPoints[index].position;
+            point += BinomCoef(curveSizes[curveNum] - 1, i) * Mathf.Pow(1 - t, curveSizes[curveNum] - 1 - i) * Mathf.Pow(t, i) * controlPoints[index];
             index++;
         }
 
