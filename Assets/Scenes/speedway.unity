@@ -1731,14 +1731,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4702e29554a034e4ea491557eb6caa76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 0.1
+  speed: 15
   routeObjects:
   - {fileID: 447295395}
   - {fileID: 111590680}
   lane: 0
   nextObjectDistance: Infinity
   curvePosition: 0
-  approxStepSize: 0.0001
+  numApproximationPoints: 100
 --- !u!65 &1361906463
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1852,14 +1852,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4702e29554a034e4ea491557eb6caa76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 0.1
+  speed: 15
   routeObjects:
   - {fileID: 447295395}
   - {fileID: 111590680}
   lane: 0
   nextObjectDistance: Infinity
   curvePosition: 0.5
-  approxStepSize: 0.0001
+  numApproximationPoints: 100
 --- !u!65 &1481072689
 BoxCollider:
   m_ObjectHideFlags: 0

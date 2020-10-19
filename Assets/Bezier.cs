@@ -10,6 +10,7 @@ public class Bezier
     private Transform[] controlPoints = null;
     private int[] curveLengths = null;
     private float[] percentCurve = null;
+    private float epsilon = .0001f;
 
     public Bezier(Transform[] controlPoints, int[] curveLengths)
     {
@@ -35,8 +36,8 @@ public class Bezier
         {
             return new Vector3();
         }
-        
-        float tGlobal = Mathf.Clamp(t, 0, 1);
+
+        float tGlobal = Mathf.Abs(t - Mathf.Floor(t));
         float tLocal = 0;
         int curveNum = 0;
         float totalPercent = 0;
@@ -85,16 +86,15 @@ public class Bezier
     {
         tStart = Mathf.Clamp(tStart, 0, 1);
         tStop = Mathf.Clamp(tStop, 0, 1);
-        float length = 0;
-
-        if (tStop < tStart)
+        if (tStart == tStop)
         {
-            float total = tStop + (1 - tStart);
-            float recursivePercent = tStop / total;
-            length += ArcLengthApproximation(0, tStop, (int)(recursivePercent * numPoints));
-            numPoints *= (int)(1 - recursivePercent);
-            tStop = 1;
+            return 0;
         }
+        else if (tStop < tStart)
+        {
+            tStop++;
+        }
+        float length = 0;
 
         Vector3 lastPoint;
         Vector3 currentPoint = GenPoint(tStart);
@@ -107,6 +107,58 @@ public class Bezier
         }
 
         return length;
+    }
+
+    public float GenDistanceT(float tStart, float distance, int numPoints)
+    {
+        float aggDistance = 0;
+        float t = tStart;
+        float step = 1f / (Mathf.Max(numPoints, 1));
+        bool overStep = false;
+        Vector3 lastPoint;
+        Vector3 currentPoint = GenPoint(t);
+
+        while (!isApproxEqual(aggDistance, distance, epsilon))
+        {
+            if (aggDistance < distance)
+            {
+                if (overStep)
+                {
+                    step /= 2;
+                    overStep = false;
+                }
+                t += step;
+                lastPoint = currentPoint;
+                currentPoint = GenPoint(t);
+                aggDistance += Vector3.Distance(lastPoint, currentPoint);
+            }
+            if (aggDistance > distance)
+            {
+                if (!overStep)
+                {
+                    step /= 2;
+                    overStep = true;
+                }
+                t -= step;
+                lastPoint = GenPoint(t);
+                aggDistance -= Vector3.Distance(lastPoint, currentPoint);
+                currentPoint = lastPoint;
+            }
+        }
+
+        return t - Mathf.Floor(t);
+    }
+
+    bool isApproxEqual(float a, float b, float epsilon)
+    {
+        if (a >= b - epsilon && a <= b + epsilon)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     private int BinomCoef(int total, int choose)

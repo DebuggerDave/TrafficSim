@@ -21,7 +21,7 @@ public class Move : MonoBehaviour
     public float curvePosition = 0;
 
     [Min(1)]
-    public int numApproximationPoints = 20;
+    public int numApproximationPoints = 100;
 
     // Start is called before the first frame update
     private void Start()
@@ -73,8 +73,8 @@ public class Move : MonoBehaviour
         Vector3 currentPosition = transform.position;
         Vector3 currentDirection = transform.Find("Front").position - currentPosition;
 
-        float updatedPosition = curvePosition + (Time.deltaTime * speed);
-        curvePosition = updatedPosition - Mathf.Floor(updatedPosition);
+        float distance = Time.deltaTime * speed;
+        curvePosition = routes[lane].bezier.GenDistanceT(curvePosition, distance, numApproximationPoints);
         Vector3 newPosition = routes[lane].bezier.GenPoint(curvePosition);
         transform.position = newPosition;
 
