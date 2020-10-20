@@ -53,6 +53,10 @@ public class Vehicle : MonoBehaviour
         else
         {
             UpdateTransform();
+            if (name == "Car1")
+            {
+                Debug.Log("Distance to Car2: " + GetNextVehicleDist());
+            }
         }
     }
 
