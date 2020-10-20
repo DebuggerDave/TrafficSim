@@ -16,18 +16,28 @@ public class Bezier
     // for floating point approximation
     private static float epsilon = .0001f;
 
-    public Bezier(Vector3[] controlPoints, int[] numCurveControlPoints)
+    public Bezier(Vector3[] controlPoints, int[] curveSizes)
     {
         this.controlPoints = controlPoints;
-        this.curveSizes = numCurveControlPoints;
+        this.curveSizes = curveSizes;
 
         if (controlPoints.Length < 2)
         {
             throw new System.ArgumentException("ControlPoints must contain at least 2 points");
         }
-        if (numCurveControlPoints.Sum() != controlPoints.Length)
+        if (curveSizes.Sum() != controlPoints.Length)
         {
             throw new System.ArgumentException("Sum of numCurveControlPoints must equal total controlPoint");
+        }
+
+        int index = curveSizes[0] - 1;
+        for (int i = 0; i < (curveSizes.Length - 1); i++)
+        {
+            if (controlPoints[index] != controlPoints[index + 1])
+            {
+                throw new System.ArgumentException("Intersection points between bezier curves must be equal");
+            }
+            index += curveSizes[0];
         }
     }
 
