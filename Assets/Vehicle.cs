@@ -4,16 +4,9 @@ using UnityEngine;
 
 public class Vehicle : MonoBehaviour
 {
-    [SerializeField]
-    [Min(0)]
-    // m/s
-    private float speed = 10;
 
     [SerializeField]
     private GameObject[] routes = new GameObject[0];
-
-    [SerializeField]
-    private int lane = 0;
 
     [SerializeField]
     [Min(1)]
@@ -23,8 +16,24 @@ public class Vehicle : MonoBehaviour
     [Min(1)]
     private float laneWidth = 3;
 
+    [SerializeField]
     [Range(0, 1)]
-    public float bezierParam = 0;
+    private float bezierParam = 0;
+
+    [SerializeField]
+    private int lane = 0;
+
+    [SerializeField]
+    private float speed = 0;
+
+    [SerializeField]
+    private float acceleration = 0;
+
+    public float BezierParam { get => bezierParam; }
+    public int Lane { get => lane; }
+    public float Speed { get => speed; }
+    public float Acceleration { get => acceleration; set => acceleration = value; }
+
 
     // Start is called before the first frame update
     private void Start()
@@ -35,7 +44,7 @@ public class Vehicle : MonoBehaviour
         }
         else
         {
-            lane = Mathf.Clamp(lane, 0, routes.Length);
+            lane = Mathf.Clamp(Lane, 0, routes.Length);
             if (GetCurrentBezier() != null)
             {
                 transform.position = GetCurrentBezier().GenPoint(bezierParam);
@@ -52,6 +61,7 @@ public class Vehicle : MonoBehaviour
         }
         else
         {
+            speed += acceleration * Time.deltaTime;
             UpdateTransform();
         }
     }
@@ -76,7 +86,7 @@ public class Vehicle : MonoBehaviour
         return GetCurrentRoute().bezier;
     }
 
-    private float GetNextVehicleDist()
+    public float GetNextVehicleDist()
     {
         float step = 1f / (numApproxPoints - 1);
         Vector3 currentPosition = transform.position;
@@ -118,7 +128,14 @@ public class Vehicle : MonoBehaviour
 
     public void MoveRight()
     {
-        lane = Mathf.Clamp(lane + 1, 0, routes.Length - 1);
+        if (!IsRightLaneOpen())
+        {
+            Debug.Log("Can't turn right");
+        }
+        else
+        {
+            lane = Mathf.Clamp(lane - 1, 0, routes.Length - 1);
+        }
     }
 
     public bool IsRightLaneOpen()
@@ -150,7 +167,14 @@ public class Vehicle : MonoBehaviour
 
     public void MoveLeft()
     {
-        lane = Mathf.Clamp(lane - 1, 0, routes.Length - 1);
+        if (!IsLeftLaneOpen())
+        {
+            Debug.Log("Can't turn right");
+        }
+        else
+        {
+            lane = Mathf.Clamp(lane + 1, 0, routes.Length - 1);
+        }
     }
 
     public bool IsLeftLaneOpen()
