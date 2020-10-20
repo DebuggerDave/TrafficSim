@@ -29,25 +29,28 @@ public class Vehicle : MonoBehaviour
     [SerializeField]
     private float acceleration = 0;
 
-    public float BezierParam { get => bezierParam; }
-    public int Lane { get => lane; }
-    public float Speed { get => speed; }
+    public GameObject[] Routes { get => routes; }
+    public int NumApproxPoints { get => numApproxPoints; }
+    public float LaneWidth { get => laneWidth; }
+    public float BezierParam { get => bezierParam; private set => bezierParam = value;  }
+    public int Lane { get => lane; private set => lane = value; }
+    public float Speed { get => speed; private set => speed = value; }
     public float Acceleration { get => acceleration; set => acceleration = value; }
 
 
     // Start is called before the first frame update
     private void Start()
     {
-        if (routes.Length == 0)
+        if (Routes.Length == 0)
         {
             Debug.LogError("Vehicle requires a positive amount of routes");
         }
         else
         {
-            lane = Mathf.Clamp(Lane, 0, routes.Length);
+            Lane = Mathf.Clamp(Lane, 0, Routes.Length);
             if (GetCurrentBezier() != null)
             {
-                transform.position = GetCurrentBezier().GenPoint(bezierParam);
+                transform.position = GetCurrentBezier().GenPoint(BezierParam);
             }
         }
     }
@@ -55,20 +58,20 @@ public class Vehicle : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
-        if (routes.Length == 0)
+        if (Routes.Length == 0)
         {
             Debug.LogError("Vehicle requires a positive amount of routes");
         }
         else
         {
-            speed += acceleration * Time.deltaTime;
+            Speed += Acceleration * Time.deltaTime;
             UpdateTransform();
         }
     }
 
     private Route GetRoute(int i)
     {
-        return routes[i].GetComponent<Route>();
+        return Routes[i].GetComponent<Route>();
     }
 
     private Route GetBezier(int i)
@@ -78,7 +81,7 @@ public class Vehicle : MonoBehaviour
 
     private Route GetCurrentRoute()
     {
-        return routes[lane].GetComponent<Route>();
+        return Routes[Lane].GetComponent<Route>();
     }
 
     private Bezier GetCurrentBezier()
@@ -88,12 +91,12 @@ public class Vehicle : MonoBehaviour
 
     public float GetNextVehicleDist()
     {
-        float step = 1f / (numApproxPoints - 1);
+        float step = 1f / (NumApproxPoints - 1);
         Vector3 currentPosition = transform.position;
 
         if (GetCurrentBezier() != null)
         {
-            for (float t = (bezierParam + step); t <= (bezierParam + 1); t += step)
+            for (float t = (BezierParam + step); t <= (BezierParam + 1); t += step)
             {
                 Vector3 lastPosition = currentPosition;
                 currentPosition = GetCurrentBezier().GenPoint(t);
@@ -111,13 +114,13 @@ public class Vehicle : MonoBehaviour
                     }
                     else
                     {
-                        float nextBezierParam = hitVehicle.bezierParam;
-                        if (nextBezierParam < bezierParam)
+                        float nextBezierParam = hitVehicle.BezierParam;
+                        if (nextBezierParam < BezierParam)
                         {
                             nextBezierParam++;
                         }
 
-                        return GetCurrentBezier().ArcLengthApproximation(bezierParam, nextBezierParam, numApproxPoints);
+                        return GetCurrentBezier().ArcLengthApproximation(BezierParam, nextBezierParam, NumApproxPoints);
                     }
                 }
             }
@@ -134,7 +137,7 @@ public class Vehicle : MonoBehaviour
         }
         else
         {
-            lane = Mathf.Clamp(lane - 1, 0, routes.Length - 1);
+            Lane = Mathf.Clamp(Lane - 1, 0, Routes.Length - 1);
         }
     }
 
@@ -144,16 +147,16 @@ public class Vehicle : MonoBehaviour
         Transform backTransform = transform.Find("Back");
         if ((frontTransform == null) || (backTransform == null))
         {
-            Debug.LogError("Cannot lane check, Vehicle must have \"Front\" and \"Back\" children");
+            Debug.LogError("Cannot Lane check, Vehicle must have \"Front\" and \"Back\" children");
             return false;
         }
         else
         {
             Vector3 direction = Vector3.Cross(-(frontTransform.position - transform.position), Vector3.up);
             if (
-                Physics.Raycast(frontTransform.position, direction, laneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide) ||
-                Physics.Raycast(backTransform.position, direction, laneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide) ||
-                Physics.Raycast(transform.position, direction, laneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide)
+                Physics.Raycast(frontTransform.position, direction, LaneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide) ||
+                Physics.Raycast(backTransform.position, direction, LaneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide) ||
+                Physics.Raycast(transform.position, direction, LaneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide)
                 )
             {
                 return false;
@@ -173,7 +176,7 @@ public class Vehicle : MonoBehaviour
         }
         else
         {
-            lane = Mathf.Clamp(lane + 1, 0, routes.Length - 1);
+            Lane = Mathf.Clamp(Lane + 1, 0, Routes.Length - 1);
         }
     }
 
@@ -183,16 +186,16 @@ public class Vehicle : MonoBehaviour
         Transform backTransform = transform.Find("Back");
         if ((frontTransform == null) || (backTransform == null))
         {
-            Debug.LogError("Cannot lane check, Vehicle must have \"Front\" and \"Back\" children");
+            Debug.LogError("Cannot Lane check, Vehicle must have \"Front\" and \"Back\" children");
             return false;
         }
         else
         {
             Vector3 direction = Vector3.Cross(frontTransform.position - transform.position, Vector3.up);
             if (
-                Physics.Raycast(frontTransform.position, direction, laneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide) ||
-                Physics.Raycast(backTransform.position, direction, laneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide) ||
-                Physics.Raycast(transform.position, direction, laneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide)
+                Physics.Raycast(frontTransform.position, direction, LaneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide) ||
+                Physics.Raycast(backTransform.position, direction, LaneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide) ||
+                Physics.Raycast(transform.position, direction, LaneWidth, LayerMask.GetMask("Vehicle"), QueryTriggerInteraction.Collide)
                 )
             {
                 return false;
@@ -213,11 +216,11 @@ public class Vehicle : MonoBehaviour
 
     private void UpdatePosition()
     {
-        float distance = Time.deltaTime * speed;
+        float distance = Time.deltaTime * Speed;
         if (GetCurrentBezier() != null)
         {
-            bezierParam = GetCurrentBezier().GenDistanceT(bezierParam, distance, numApproxPoints);
-            Vector3 newPosition = GetCurrentBezier().GenPoint(bezierParam);
+            BezierParam = GetCurrentBezier().GenDistanceT(BezierParam, distance, NumApproxPoints);
+            Vector3 newPosition = GetCurrentBezier().GenPoint(BezierParam);
             transform.position = newPosition;
         }
     }
