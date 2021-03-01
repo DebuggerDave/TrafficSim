@@ -29,6 +29,9 @@ public class Vehicle : MonoBehaviour
     [SerializeField]
     private float acceleration = 0;
 
+    [SerializeField]
+    private bool visualizeVision = false;
+
     public GameObject[] Routes { get => routes; }
     public int NumApproxPoints { get => numApproxPoints; }
     public float LaneWidth { get => laneWidth; }
@@ -255,6 +258,32 @@ public class Vehicle : MonoBehaviour
     private void OnTriggerExit(Collider collider)
     {
         //Debug.Log("HEY");
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (visualizeVision)
+        {
+            Transform frontTransform = transform.Find("Front");
+            Transform backTransform = transform.Find("Back");
+
+            if ((frontTransform != null) && (backTransform != null))
+            {
+                Vector3 direction = Vector3.Cross(frontTransform.position - transform.position, Vector3.up);
+
+                // Left lane vision
+                Debug.DrawLine(frontTransform.position, frontTransform.position + (direction * LaneWidth), Color.yellow);
+                Debug.DrawLine(backTransform.position, backTransform.position + (direction * LaneWidth), Color.yellow);
+                Debug.DrawLine(transform.position, transform.position + (direction * LaneWidth), Color.yellow);
+
+                direction = Vector3.Cross(-(frontTransform.position - transform.position), Vector3.up);
+
+                // Left lane vision
+                Debug.DrawLine(frontTransform.position, frontTransform.position + (direction * LaneWidth), Color.yellow);
+                Debug.DrawLine(backTransform.position, backTransform.position + (direction * LaneWidth), Color.yellow);
+                Debug.DrawLine(transform.position, transform.position + (direction * LaneWidth), Color.yellow);
+            }
+        }
     }
 
 }

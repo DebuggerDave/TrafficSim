@@ -485,6 +485,7 @@ MonoBehaviour:
   lane: 0
   speed: 0
   acceleration: 0
+  visualizeVision: 0
 --- !u!65 &133518054
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1583,8 +1584,8 @@ Camera:
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
-  orthographic: 0
-  orthographic size: 5
+  orthographic: 1
+  orthographic size: 20.38835
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1607,13 +1608,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalRotation: {x: 0.5, y: 0.5, z: -0.5, w: 0.5}
   m_LocalPosition: {x: 0, y: 52, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 90, z: 0}
 --- !u!1 &1039768816
 GameObject:
   m_ObjectHideFlags: 0
@@ -2003,6 +2004,7 @@ MonoBehaviour:
   lane: 0
   speed: 0
   acceleration: 0
+  visualizeVision: 1
 --- !u!65 &1361906463
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2790,6 +2792,7 @@ MonoBehaviour:
   lane: 1
   speed: 0
   acceleration: 0
+  visualizeVision: 0
 --- !u!65 &1990635576
 BoxCollider:
   m_ObjectHideFlags: 0
